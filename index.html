@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quản Lý Sản Phẩm</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+      .product-card {
+        transition: transform 0.3s;
+        height: 100%;
+      }
+      .product-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      }
+      .product-image {
+        height: 200px;
+        object-fit: cover;
+      }
+      .price-tag {
+        font-size: 1.25rem;
+        font-weight: bold;
+        color: #dc3545;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container-fluid p-4">
+      <!-- Header -->
+      <div class="row mb-4">
+        <div class="col-12">
+          <h1 class="text-center text-primary">
+            <i class="bi bi-shop"></i> Quản Lý Sản Phẩm
+          </h1>
+        </div>
+      </div>
+
+      <!-- Search and Sort Controls -->
+      <div class="row mb-4">
+        <div class="col-md-6 mb-3">
+          <div class="input-group">
+            <span class="input-group-text bg-primary text-white">
+              <i class="bi bi-search"></i>
+            </span>
+            <input 
+              type="text" 
+              class="form-control" 
+              id="searchInput" 
+              placeholder="Tìm kiếm theo tên sản phẩm..."
+              onchange="handleSearch()"
+              oninput="handleSearch()">
+          </div>
+        </div>
+        <div class="col-md-6 mb-3">
+          <div class="btn-group w-100" role="group">
+            <button type="button" class="btn btn-outline-success" onclick="sortProducts('name', 'asc')">
+              <i class="bi bi-sort-alpha-down"></i> Tên A-Z
+            </button>
+            <button type="button" class="btn btn-outline-success" onclick="sortProducts('name', 'desc')">
+              <i class="bi bi-sort-alpha-up"></i> Tên Z-A
+            </button>
+            <button type="button" class="btn btn-outline-info" onclick="sortProducts('price', 'asc')">
+              <i class="bi bi-sort-numeric-down"></i> Giá Tăng
+            </button>
+            <button type="button" class="btn btn-outline-info" onclick="sortProducts('price', 'desc')">
+              <i class="bi bi-sort-numeric-up"></i> Giá Giảm
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Navigation -->
+      <ul class="nav nav-tabs mb-4" id="myTab" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active" id="grid-tab" data-bs-toggle="tab" data-bs-target="#grid-view" type="button">
+            <i class="bi bi-grid-3x3-gap"></i> Hiển Thị Lưới
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="table-tab" data-bs-toggle="tab" data-bs-target="#table-view" type="button">
+            <i class="bi bi-table"></i> Bảng Quản Lý
+          </button>
+        </li>
+      </ul>
+
+      <!-- Tab Content -->
+      <div class="tab-content" id="myTabContent">
+        <!-- Grid View -->
+        <div class="tab-pane fade show active" id="grid-view" role="tabpanel">
+          <div class="row row-cols-1 row-cols-md-3 row-cols-lg-5 g-4" id="productsGrid">
+            <!-- Products will be loaded here -->
+          </div>
+          <!-- Pagination for Grid -->
+          <nav aria-label="Page navigation" class="mt-4">
+            <ul class="pagination justify-content-center" id="paginationGrid">
+              <!-- Pagination will be loaded here -->
+            </ul>
+          </nav>
+        </div>
+
+        <!-- Table View -->
+        <div class="tab-pane fade" id="table-view" role="tabpanel">
+          <div class="table-responsive">
+            <table class="table table-striped table-hover table-bordered">
+              <thead class="table-dark">
+                <tr>
+                  <th>ID</th>
+                  <th>Hình Ảnh</th>
+                  <th>Tên Sản Phẩm</th>
+                  <th>Mô Tả</th>
+                  <th>Danh Mục</th>
+                  <th>Giá</th>
+                  <th>Thao Tác</th>
+                </tr>
+              </thead>
+              <tbody id="productsTable">
+                <!-- Products will be loaded here -->
+              </tbody>
+            </table>
+          </div>
+          <!-- Pagination for Table -->
+          <nav aria-label="Page navigation" class="mt-4">
+            <ul class="pagination justify-content-center" id="paginationTable">
+              <!-- Pagination will be loaded here -->
+            </ul>
+          </nav>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="index.js"></script>
+  </body>
+</html>
