@@ -1,229 +1,240 @@
-let allProducts = [];
-let filteredProducts = [];
-let currentPage = 1;
-const itemsPerPage = 10;
+async function Load() {
+    try {
+        let res = await fetch('http://localhost:3000/posts')
+        let data = await res.json();
+        let body = document.getElementById("table-body");
+        body.innerHTML = "";
+        let activePosts = data.filter(post => !post.isDeleted);
+        for (const post of activePosts) {
+            body.innerHTML += `
+            <tr>
+                <td>${post.id}</td>
+                <td>${post.title}</td>
+                <td>${post.views}</td>
+                <td><input value="Delete" type="submit" onclick="Delete(${post.id})" /></td>
+            </tr>`
+        }
+    } catch (error) {
 
-// Fetch and load products
-fetch("db.json")
-    .then((response) => response.json())
-    .then((datas) => {
-        allProducts = datas;
-        filteredProducts = [...allProducts];
-        displayProducts();
-    })
-    .catch((error) => console.error("Error fetching data:", error));
-
-// Display products in grid and table
-function displayProducts() {
-    displayGridView();
-    displayTableView();
-    displayPagination();
+    }
 }
+async function LoadIsDeleted() {
+    try {
+        let res = await fetch('http://localhost:3000/posts')
+        let data = await res.json();
+        let body = document.getElementById("table-body-deleted");
+        body.innerHTML = "";
+        let deletedPosts = data.filter(post => post.isDeleted);
+        for (const post of deletedPosts) {
+            body.innerHTML += `
+            <tr style="text-decoration: line-through; opacity: 0.6;">
+                <td>${post.id}</td>
+                <td>${post.title}</td>
+                <td>${post.views}</td>
+                <td><input value="Deleted" type="submit" disabled /></td>
+            </tr>`
+        }
+    } catch (error) {
 
-// Display products in grid view (5 per row)
-function displayGridView() {
-    const productsGrid = document.getElementById("productsGrid");
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
-    
-    productsGrid.innerHTML = paginatedProducts.map(data => `
-        <div class="col">
-            <div class="card product-card">
-                <img src="${data.images[0]}" class="card-img-top product-image" alt="${data.title}" onerror="this.src='https://placehold.co/600x400?text=No+Image'">
-                <div class="card-body">
-                    <h6 class="card-title text-truncate" title="${data.title}">
-                        ${data.title}
-                    </h6>
-                    <p class="card-text text-muted small" style="height: 60px; overflow: hidden;">
-                        ${data.description.substring(0, 80)}...
-                    </p>
-                    <div class="d-flex justify-content-between align-items-center">
-                        <span class="price-tag">$${data.price}</span>
-                        <span class="badge bg-secondary">${data.category.name}</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `).join("");
+    }
 }
-
-// Display products in table view
-function displayTableView() {
-    const productsTable = document.getElementById("productsTable");
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
+async function Save() {
+    let id = document.getElementById("id_txt").value;
+    let title = document.getElementById("title_txt").value;
+    let views = document.getElementById("views_txt").value;
+    let res;
     
-    productsTable.innerHTML = paginatedProducts.map(data => `
-        <tr>
-            <td>${data.id}</td>
-            <td>
-                <img src="${data.images[0]}" alt="${data.title}" style="width: 60px; height: 60px; object-fit: cover;" class="rounded" onerror="this.src='https://placehold.co/600x400?text=No+Image'">
-            </td>
-            <td>${data.title}</td>
-            <td style="max-width: 300px;">
-                <small>${data.description.substring(0, 100)}...</small>
-            </td>
-            <td>
-                <span class="badge bg-info">${data.category.name}</span>
-            </td>
-            <td><strong class="text-danger">$${data.price}</strong></td>
-            <td>
-                <button class="btn btn-sm btn-primary" onclick="editProduct(${data.id})">
-                    <i class="bi bi-pencil"></i>
-                </button>
-                <button class="btn btn-sm btn-danger" onclick="deleteProduct(${data.id})">
-                    <i class="bi bi-trash"></i>
-                </button>
-            </td>
-        </tr>
-    `).join("");
-}
-
-// Search function using onChange
-function handleSearch() {
-    const searchTerm = document.getElementById("searchInput").value.toLowerCase();
-    
-    if (searchTerm === "") {
-        filteredProducts = [...allProducts];
+    if (id && id.trim() !== "") {
+        let getID = await fetch('http://localhost:3000/posts/' + id);
+        if (getID.ok) {
+            res = await fetch('http://localhost:3000/posts/'+id, {
+                method: 'PATCH',
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(
+                    {
+                        title: title,
+                        views: views
+                    }
+                )
+            })
+        }
     } else {
-        filteredProducts = allProducts.filter(product => 
-            product.title.toLowerCase().includes(searchTerm)
-        );
-    }
-    
-    currentPage = 1; // Reset to first page
-    displayProducts();
-}
-
-// Sort products
-function sortProducts(type, order) {
-    if (type === 'name') {
-        filteredProducts.sort((a, b) => {
-            const nameA = a.title.toLowerCase();
-            const nameB = b.title.toLowerCase();
-            
-            if (order === 'asc') {
-                return nameA.localeCompare(nameB);
-            } else {
-                return nameB.localeCompare(nameA);
-            }
+        let allPosts = await fetch('http://localhost:3000/posts');
+        let postsData = await allPosts.json();
+        let maxId = 0;
+        postsData.forEach(post => {
+            let postId = parseInt(post.id);
+            if (postId > maxId) maxId = postId;
         });
-    } else if (type === 'price') {
-        filteredProducts.sort((a, b) => {
-            if (order === 'asc') {
-                return a.price - b.price;
-            } else {
-                return b.price - a.price;
-            }
+        let newId = String(maxId + 1);
+        
+        res = await fetch('http://localhost:3000/posts', {
+            method: 'POST',
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(
+                {
+                    id: newId,
+                    title: title,
+                    views: views,
+                    isDeleted: false
+                }
+            )
+        })
+    }
+    if (res.ok) {
+        console.log("them thanh cong");
+        document.getElementById("id_txt").value = "";
+        document.getElementById("title_txt").value = "";
+        document.getElementById("views_txt").value = "";
+        Load();
+    }
+}
+async function Delete(id) {
+    let res = await fetch('http://localhost:3000/posts/' + id,
+        {
+            method: 'PATCH',
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                isDeleted: true
+            })
+        }
+    );
+    if (res.ok) {
+        console.log("xoa mem thanh cong");
+        Load(); 
+    }
+}
+async function LoadComments() {
+    try {
+        let res = await fetch('http://localhost:3000/comments');
+        let data = await res.json();
+        let body = document.getElementById("comment-table-body");
+        body.innerHTML = "";
+        let activeComments = data.filter(comment => !comment.isDeleted);
+        for (const comment of activeComments) {
+            body.innerHTML += `
+            <tr>
+                <td>${comment.id}</td>
+                <td>${comment.text}</td>
+                <td>
+                    <input value="Edit" type="button" onclick="EditComment('${comment.id}', '${comment.text}', '${comment.postId}')" />
+                    <input value="Delete" type="button" onclick="DeleteComment(${comment.id})" />
+                </td>
+            </tr>`
+        }
+    } catch (error) {
+        console.error("Lỗi khi load comments:", error);
+    }
+}
+
+async function LoadDeletedComments() {
+    try {
+        let res = await fetch('http://localhost:3000/comments');
+        let data = await res.json();
+        let body = document.getElementById("comment-table-body-deleted");
+        body.innerHTML = "";
+        let deletedComments = data.filter(comment => comment.isDeleted);
+        for (const comment of deletedComments) {
+            body.innerHTML += `
+            <tr style="text-decoration: line-through; opacity: 0.6;">
+                <td>${comment.id}</td>
+                <td>${comment.text}</td>
+                <td>${comment.postId || 'N/A'}</td>
+                <td><input value="Deleted" type="button" disabled /></td>
+            </tr>`
+        }
+    } catch (error) {
+        console.error("Lỗi khi load deleted comments:", error);
+    }
+}
+
+async function SaveComment() {
+    let id = document.getElementById("comment_id_txt").value;
+    let text = document.getElementById("comment_text_txt").value;
+    let postId = document.getElementById("comment_postId_txt").value;
+    let res;
+
+    if (id && id.trim() !== "") {
+        let getID = await fetch('http://localhost:3000/comments/' + id);
+        if (getID.ok) {
+            res = await fetch('http://localhost:3000/comments/' + id, {
+                method: 'PATCH',
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(
+                    {
+                        text: text,
+                        postId: postId || null
+                    }
+                )
+            })
+        }
+    } else {
+        let allComments = await fetch('http://localhost:3000/comments');
+        let commentsData = await allComments.json();
+        let maxId = 0;
+        commentsData.forEach(comment => {
+            let commentId = parseInt(comment.id);
+            if (commentId > maxId) maxId = commentId;
         });
+        let newId = String(maxId + 1);
+        
+        res = await fetch('http://localhost:3000/comments', {
+            method: 'POST',
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(
+                {
+                    id: newId,
+                    text: text,
+                    postId: postId || null,
+                    isDeleted: false
+                }
+            )
+        })
     }
-    
-    displayProducts();
+    if (res.ok) {
+        console.log("Lưu comment thành công");
+        document.getElementById("comment_id_txt").value = "";
+        document.getElementById("comment_text_txt").value = "";
+        document.getElementById("comment_postId_txt").value = "";
+        LoadComments();
+        LoadDeletedComments();
+    }
 }
 
-// Edit product (placeholder)
-function editProduct(id) {
-    alert(`Chỉnh sửa sản phẩm ID: ${id}`);
-}
-
-// Delete product (placeholder)
-function deleteProduct(id) {
-    if (confirm(`Bạn có chắc muốn xóa sản phẩm ID: ${id}?`)) {
-        filteredProducts = filteredProducts.filter(p => p.id !== id);
-        allProducts = allProducts.filter(p => p.id !== id);
-        displayProducts();
+async function DeleteComment(id) {
+    let res = await fetch('http://localhost:3000/comments/' + id, {
+        method: 'PATCH',
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            isDeleted: true
+        })
+    });
+    if (res.ok) {
+        console.log("Xóa mềm comment thành công");
+        LoadComments();
+        LoadDeletedComments();
     }
 }
 
-// Display pagination
-function displayPagination() {
-    const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
-    const paginationHTML = generatePaginationHTML(totalPages);
-    
-    document.getElementById("paginationGrid").innerHTML = paginationHTML;
-    document.getElementById("paginationTable").innerHTML = paginationHTML;
+function EditComment(id, text, postId) {
+    document.getElementById("comment_id_txt").value = id;
+    document.getElementById("comment_text_txt").value = text;
+    document.getElementById("comment_postId_txt").value = postId === 'null' ? '' : postId;
 }
 
-// Generate pagination HTML
-function generatePaginationHTML(totalPages) {
-    if (totalPages <= 1) return '';
-    
-    let html = '';
-    
-    // Previous button
-    html += `
-        <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
-            <a class="page-link" href="#" onclick="changePage(${currentPage - 1}); return false;">
-                <i class="bi bi-chevron-left"></i> Trước
-            </a>
-        </li>
-    `;
-    
-    // Page numbers
-    const maxVisiblePages = 5;
-    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
-    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-    
-    if (endPage - startPage < maxVisiblePages - 1) {
-        startPage = Math.max(1, endPage - maxVisiblePages + 1);
-    }
-    
-    // First page
-    if (startPage > 1) {
-        html += `
-            <li class="page-item">
-                <a class="page-link" href="#" onclick="changePage(1); return false;">1</a>
-            </li>
-        `;
-        if (startPage > 2) {
-            html += '<li class="page-item disabled"><span class="page-link">...</span></li>';
-        }
-    }
-    
-    // Page numbers
-    for (let i = startPage; i <= endPage; i++) {
-        html += `
-            <li class="page-item ${i === currentPage ? 'active' : ''}">
-                <a class="page-link" href="#" onclick="changePage(${i}); return false;">${i}</a>
-            </li>
-        `;
-    }
-    
-    // Last page
-    if (endPage < totalPages) {
-        if (endPage < totalPages - 1) {
-            html += '<li class="page-item disabled"><span class="page-link">...</span></li>';
-        }
-        html += `
-            <li class="page-item">
-                <a class="page-link" href="#" onclick="changePage(${totalPages}); return false;">${totalPages}</a>
-            </li>
-        `;
-    }
-    
-    // Next button
-    html += `
-        <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
-            <a class="page-link" href="#" onclick="changePage(${currentPage + 1}); return false;">
-                Sau <i class="bi bi-chevron-right"></i>
-            </a>
-        </li>
-    `;
-    
-    return html;
-}
-
-// Change page
-function changePage(page) {
-    const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
-    
-    if (page < 1 || page > totalPages) return;
-    
-    currentPage = page;
-    displayProducts();
-    
-    // Scroll to top
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-}
+LoadIsDeleted();
+Load();
+LoadComments();
+LoadDeletedComments();
